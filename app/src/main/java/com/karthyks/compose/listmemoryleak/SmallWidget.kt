@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,8 +23,11 @@ fun SmallWidget(
     id: Int,
     smallWidgetViewModel: SmallWidgetViewModel
 ) {
-    LaunchedEffect(key1 = smallWidgetViewModel) {
+    DisposableEffect(key1 = id) {
         smallWidgetViewModel.setCurrentID(id)
+        onDispose {
+            println("ID $id widget is disposed")
+        }
     }
     val state = smallWidgetViewModel.state.collectAsState()
     Box(modifier = Modifier.size(30.dp)) {

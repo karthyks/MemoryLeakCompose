@@ -1,41 +1,28 @@
 package com.karthyks.compose.listmemoryleak
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun CardComponent(
     id: Int,
-    cardViewModel: CardViewModel = viewModel(key = "CardViewModel$id")
+    cardViewModel: CardViewModel,
+    widgetContent: @Composable (Int) -> Unit,
 ) {
-    LaunchedEffect(key1 = cardViewModel) {
+    LaunchedEffect(key1 = id) {
         cardViewModel.setCurrentId(id)
     }
-    Box(
-        modifier = Modifier
-            .width(200.dp)
-            .height(140.dp)
-            .background(color = MaterialTheme.colors.primaryVariant)
-    ) {
-        val currentId by cardViewModel.state.collectAsState()
-        SmallWidget(
-            currentId,
-            smallWidgetViewModel = viewModel(key = "SmallWidgetViewModel$currentId")
-        )
-    }
+    val currentId by cardViewModel.state.collectAsState()
+    widgetContent(currentId)
 }
 
 
@@ -47,4 +34,34 @@ class CardViewModel : ViewModel() {
     fun setCurrentId(id: Int) {
         _state.value = id
     }
+}
+
+class CustomStoreOwner : ViewModelStoreOwner {
+
+    private val store by lazy {
+        CustomStore()
+    }
+
+    override fun getViewModelStore(): ViewModelStore {
+        return store
+    }
+
+    fun clear() {
+        store.clear()
+    }
+
+    inner class CustomStore : ViewModelStore()
+}
+
+@Composable
+fun rememberStoreOwner(): CustomStoreOwner {
+    val storeOwner = remember {
+        CustomStoreOwner()
+    }
+    DisposableEffect(key1 = Unit) {
+        onDispose {
+            storeOwner.clear()
+        }
+    }
+    return storeOwner
 }

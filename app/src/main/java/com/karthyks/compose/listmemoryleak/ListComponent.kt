@@ -1,11 +1,16 @@
 package com.karthyks.compose.listmemoryleak
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -35,6 +40,10 @@ fun ListComponent(listViewModel: ListViewModel = viewModel()) {
 
 @Composable
 fun CardRow(list: List<Int>) {
+    val reusableModifier = Modifier
+        .width(200.dp)
+        .height(140.dp)
+        .background(color = MaterialTheme.colors.primaryVariant)
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         state = rememberLazyListState()
@@ -43,7 +52,28 @@ fun CardRow(list: List<Int>) {
             items = list,
             key = { it },
             contentType = { "Card" }) {
-            CardComponent(id = it)
+            Box {
+                val storeOwner = rememberStoreOwner()
+                CardComponent(
+                    id = it,
+                    cardViewModel = viewModel(
+                        key = "CardViewModel$it",
+                        viewModelStoreOwner = storeOwner
+                    )
+                ) { id ->
+                    Box(
+                        modifier = reusableModifier
+                    ) {
+                        SmallWidget(
+                            id,
+                            smallWidgetViewModel = viewModel(
+                                viewModelStoreOwner = storeOwner,
+                                key = "SmallWidgetViewModel$id"
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 }
